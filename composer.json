@@ -1,6 +1,6 @@
 {
     "name": "sivanandaperumal/closure-table",
-    "description": "Adjacency List’ed Closure Table database design pattern implementation for Laravel",
+    "description": "Adjacency List’ed Closure Table database design pattern implementation for Laravel. Includes restore of tree",
     "keywords": ["laravel", "closure table", "database", "adjacency list", "pages", "categories", "hierarchy"],
     "license": "MIT",
     "authors": [
