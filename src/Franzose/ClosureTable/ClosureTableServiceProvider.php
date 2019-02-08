@@ -4,8 +4,6 @@ namespace Franzose\ClosureTable;
 use Illuminate\Support\ServiceProvider;
 use Franzose\ClosureTable\Console\ClosureTableCommand;
 use Franzose\ClosureTable\Console\MakeCommand;
-use Franzose\ClosureTable\Generators\Migration as Migrator;
-use Franzose\ClosureTable\Generators\Model as Modeler;
 
 /**
  * ClosureTable service provider

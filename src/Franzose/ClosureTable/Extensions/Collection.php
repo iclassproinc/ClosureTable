@@ -77,8 +77,10 @@ class Collection extends EloquentCollection
             $parentId = $item->{$item->getParentIdColumn()};
 
             if (array_key_exists($parentId, $result)) {
+                $item->isParent = false;
                 $result[$parentId]->appendRelation($item->getChildrenRelationIndex(), $item);
             } else {
+                $item->isParent = true;
                 $tops[] = $item;
             }
         }

@@ -352,6 +352,32 @@ class Entity extends Eloquent implements EntityInterface
         return $query;
     }
 
+    protected function joinClosureByTrashed($column, $withSelf = false)
+    {
+        $primary = $this->getQualifiedKeyName();
+        $closure = $this->closure->getTable();
+        $ancestor = $this->closure->getQualifiedAncestorColumn();
+        $descendant = $this->closure->getQualifiedDescendantColumn();
+
+        switch ($column) {
+            case 'ancestor':
+                $query = $this->join($closure, $ancestor, '=', $primary)
+                    ->where($descendant, '=', $this->getKey());
+                break;
+
+            case 'descendant':
+                $query = $this->join($closure, $descendant, '=', $primary)
+                    ->where($ancestor, '=', $this->getKey());
+                break;
+        }
+
+        $depthOperator = ($withSelf === true ? '>=' : '>');
+
+        $query->withTrashed()->where($this->closure->getQualifiedDepthColumn(), $depthOperator, 0);
+
+        return $query;
+    }
+
     /**
      * Builds closure table "where in" query on the given column.
      *
@@ -1437,6 +1463,12 @@ class Entity extends Eloquent implements EntityInterface
         }
 
         $this->whereIn($this->getKeyName(), $ids)->$action();
+    }
+
+    public function restoreTree($withSelf)
+    {
+        $ids = $this->joinClosureByTrashed('descendant', $withSelf)->pluck($this->getQualifiedKeyName());
+        return $this->whereIn($this->getKeyName(), $ids)->restore();
     }
 
     /**
