@@ -1319,7 +1319,7 @@ class Entity extends Eloquent implements EntityInterface
 
         $parentId = ($parentId === false ? $this->parent_id : $parentId);
 
-        $entity = $this->select($positionColumn)
+        $entity = $this->withTrashed()->select($positionColumn)
             ->where($parentIdColumn, '=', $parentId)
             ->orderBy($positionColumn, 'desc')
             ->first();
