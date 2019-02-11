@@ -1137,6 +1137,23 @@ class Entity extends Eloquent implements EntityInterface
     }
 
     /**
+     * Retrieves entire tree.
+     *
+     * @param array $columns
+     * @return \Franzose\ClosureTable\Extensions\Collection
+     */
+    public static function getTreeWithTrashed(array $columns = ['*'])
+    {
+        /**
+         * @var Entity $instance
+         */
+        $instance = new static;
+
+        return $instance->withTrashed()->orderBy($instance->getParentIdColumn())->orderBy($instance->getPositionColumn())
+            ->get($instance->prepareTreeQueryColumns($columns))->toTree();
+    }
+
+    /**
      * Retrieves tree by condition.
      *
      * @param mixed $column
