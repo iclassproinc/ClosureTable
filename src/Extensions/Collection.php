@@ -171,8 +171,10 @@ class Collection extends EloquentCollection
             $parentId = $item->parent_id;
 
             if (array_key_exists($parentId, $result)) {
+                $item->isParent = false;
                 $result[$parentId]->appendChild($item);
             } else {
+                $item->isParent = true;
                 $tops[] = $item;
             }
         }

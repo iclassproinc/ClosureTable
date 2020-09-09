@@ -354,6 +354,38 @@ class Entity extends Eloquent implements EntityInterface
         return $this->exists ? $this->find($this->parent_id, $columns) : null;
     }
 
+    protected function joinClosureByTrashed($column, $withSelf = false)
+    {
+        $primary = $this->getQualifiedKeyName();
+        $closure = $this->closure->getTable();
+        $ancestor = $this->closure->getQualifiedAncestorColumn();
+        $descendant = $this->closure->getQualifiedDescendantColumn();
+
+        switch ($column) {
+            case 'ancestor':
+                $query = $this->join($closure, $ancestor, '=', $primary)
+                    ->where($descendant, '=', $this->getKey());
+                break;
+
+            case 'descendant':
+                $query = $this->join($closure, $descendant, '=', $primary)
+                    ->where($ancestor, '=', $this->getKey());
+                break;
+        }
+
+        $depthOperator = ($withSelf === true ? '>=' : '>');
+
+        $query->withTrashed()->where($this->closure->getQualifiedDepthColumn(), $depthOperator, 0);
+
+        return $query;
+    }
+
+    public function restoreTree($withSelf)
+    {
+        $ids = $this->joinClosureByTrashed('descendant', $withSelf)->pluck($this->getQualifiedKeyName());
+        return $this->whereIn($this->getKeyName(), $ids)->restore();
+    }
+
     /**
      * Returns query builder for ancestors.
      *
@@ -1698,6 +1730,30 @@ class Entity extends Eloquent implements EntityInterface
     }
 
     /**
+     * Retrieves entire tree with trashed
+     *
+     * @param array $columns
+     *
+     * @return Collection
+     * @deprecated since 6.0
+     */
+    public static function getTreeWithTrashed(array $columns = ['*'])
+    {
+        /**
+         * @var Entity $instance
+         */
+        $instance = new static;
+
+        return $instance
+            ->withTrashed()
+            ->load(static::CHILDREN_RELATION_NAME)
+            ->orderBy($instance->getParentIdColumn())
+            ->orderBy($instance->getPositionColumn())
+            ->get($instance->prepareTreeQueryColumns($columns))
+            ->toTree();
+    }
+
+    /**
      * Retrieves tree by condition.
      *
      * @param mixed $column
@@ -1813,7 +1869,7 @@ class Entity extends Eloquent implements EntityInterface
         $positionColumn = $entity->getPositionColumn();
         $parentIdColumn = $entity->getParentIdColumn();
 
-        $latest = $entity->select($positionColumn)
+        $latest = $entity->withTrashed()->select($positionColumn)
             ->where($parentIdColumn, '=', $entity->parent_id)
             ->latest($positionColumn)
             ->first();
